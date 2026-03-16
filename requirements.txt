@@ -1,0 +1,6 @@
+discord.py
+opencv-python-headless
+numpy
+gTTS
+python-dotenv
+Pillow
