@@ -417,20 +417,20 @@ async def on_ready():
 
     print("Bot listo")
 
-    ahora=datetime.now(ARG_TZ)
-    espera=60-ahora.second
+    await asyncio.sleep(10)  # importante
+
+    ahora = datetime.now(ARG_TZ)
+    espera = 60 - ahora.second
     await asyncio.sleep(espera)
 
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
 
-    # CONECTAR A CANALES DE VOZ
     for guild_id, config in servers_config.items():
 
         guild = bot.get_guild(int(guild_id))
 
         if guild:
-
             try:
                 await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
             except Exception as e:

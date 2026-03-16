@@ -1,42 +1,6 @@
 {
     "servers": {
-        "1475309208860889250": {
-            "CANAL_CARGAS_ID": 1475309211138134133,
-            "CANAL_PREMIOS_ID": 1475309210832212149,
-            "CANAL_CREACION_ID": 1475309210593132655,
-            "CANAL_AVISOS_ID": 1475309210593132655,
-            "CANAL_VOZ_ID": 1475309210832212143,
-            "TEMPLATE_IMG": "plantillas/1480156876468387921_plantilla.png",
-            "avisos": [
-                {
-                    "hora": "03:54",
-                    "mensaje": "Juan lava los platos",
-                    "ultimo_ejecutado": "03:54",
-                    "activo": false
-                },
-                {
-                    "hora": "03:58",
-                    "mensaje": "aguante el pity",
-                    "activo": false,
-                    "ultimo_ejecutado": "03:58"
-                },
-                {
-                    "hora": "14:28",
-                    "mensaje": "Realizar trivia del dia",
-                    "ultimo_ejecutado": "14:28",
-                    "activo": true
-                },
-                {
-                    "hora": "17:00",
-                    "mensaje": "Subir historias del bono",
-                    "ultimo_ejecutado": "17:00",
-                    "activo": false
-                }
-            ],
-            "panel_id": 1480979278567837909,
-            "plantilla": "plantilla_1480156876468387921.png",
-            "panel_plantilla_id": 1482881356953555017
-        },
+
         "1256002493331017800": {
             "CANAL_CARGAS_ID": 1446983648091046032,
             "CANAL_PREMIOS_ID": 1284336904095010826,
