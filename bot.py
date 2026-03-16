@@ -501,6 +501,8 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     return vc
 
+import io
+
 async def reproducir_aviso(guild, canal_voz_id, texto):
 
     try:
@@ -510,29 +512,29 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
         if vc is None:
             return
 
-        archivo = f"alerta_{guild.id}.mp3"
-
+        # generar audio en memoria
         tts = gTTS(text=texto, lang="es")
-        tts.save(archivo)
+
+        audio_buffer = io.BytesIO()
+        tts.write_to_fp(audio_buffer)
+        audio_buffer.seek(0)
 
         while vc.is_playing():
             await asyncio.sleep(1)
 
         vc.play(
             discord.FFmpegPCMAudio(
-                executable="C:/Users/Snake/ffmpeg-8.0.1-essentials_build/bin/ffmpeg.exe",
-                source=archivo
+                audio_buffer,
+                pipe=True,
+                executable="ffmpeg"
             )
         )
 
         while vc.is_playing():
             await asyncio.sleep(1)
 
-        os.remove(archivo)
-
     except Exception as e:
         print("Error aviso voz:", e)
-
 async def actualizar_panel_plantilla(guild):
 
     guild_id = str(guild.id)

@@ -1,3 +1,5 @@
+gTTS
+ffmpeg-python
 discord.py
 PyNaCl
 opencv-python-headless
