@@ -1,8 +1,5 @@
 {
   "build": {
-    "aptPackages": [
-      "ffmpeg",
-      "libsodium-dev"
-    ]
+    "aptPackages": ["ffmpeg", "libsodium-dev"]
   }
 }

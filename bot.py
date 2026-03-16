@@ -381,32 +381,16 @@ async def check_scheduled_announcements():
 
             try:
 
-                vc=guild.voice_client
+                vc = await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
 
                 if vc is None:
-                    vc=await canal.connect()
+                    return
 
-                archivo=f"aviso_{guild_id}.mp3"
-
-                tts=gTTS(text=aviso["mensaje"],lang="es")
-
-                tts.save(archivo)
-
-                while vc.is_playing():
-                    await asyncio.sleep(1)
-
-                vc.play(
-                    discord.FFmpegPCMAudio(
-                        executable="ffmpeg",
-                        source=archivo
-                    )
+                await reproducir_aviso(
+                    guild,
+                    config["CANAL_VOZ_ID"],
+                    aviso["mensaje"]
                 )
-
-                while vc.is_playing():
-                    await asyncio.sleep(1)
-
-                os.remove(archivo)
-
             except Exception as e:
 
                 print("Error aviso:",e)
@@ -515,20 +499,18 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
         if vc is None:
             return
 
-        # generar audio en memoria
-        tts = gTTS(text=texto, lang="es")
+        archivo = f"tts_{guild.id}.mp3"
 
-        audio_buffer = io.BytesIO()
-        tts.write_to_fp(audio_buffer)
-        audio_buffer.seek(0)
+        # generar audio
+        tts = gTTS(text=texto, lang="es")
+        tts.save(archivo)
 
         while vc.is_playing():
             await asyncio.sleep(1)
 
         vc.play(
             discord.FFmpegPCMAudio(
-                audio_buffer,
-                pipe=True,
+                archivo,
                 executable="ffmpeg"
             )
         )
@@ -536,8 +518,17 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
         while vc.is_playing():
             await asyncio.sleep(1)
 
+        os.remove(archivo)
+
+        # desconectar para evitar sockets rotos
+        await asyncio.sleep(1)
+
+        if vc.is_connected():
+            await vc.disconnect()
+
     except Exception as e:
         print("Error aviso voz:", e)
+
 async def actualizar_panel_plantilla(guild):
 
     guild_id = str(guild.id)
