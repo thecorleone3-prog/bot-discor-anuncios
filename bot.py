@@ -392,6 +392,9 @@ async def check_scheduled_announcements():
 
                 tts.save(archivo)
 
+                while vc.is_playing():
+                    await asyncio.sleep(1)
+
                 vc.play(
                     discord.FFmpegPCMAudio(
                         executable="ffmpeg",
@@ -426,15 +429,6 @@ async def on_ready():
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
 
-    for guild_id, config in servers_config.items():
-
-        guild = bot.get_guild(int(guild_id))
-
-        if guild:
-            try:
-                await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
-            except Exception as e:
-                print("Error conectando voz:", e)
             
 # =============================
 # PANEL DE CONFIGURACION DE PLANTILLA
@@ -493,11 +487,20 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     vc = guild.voice_client
 
-    if vc is None:
-        vc = await canal.connect()
+    try:
 
-    elif vc.channel.id != canal_voz_id:
-        await vc.move_to(canal)
+        if vc is None or not vc.is_connected():
+            vc = await canal.connect(reconnect=True)
+
+        elif vc.channel.id != canal_voz_id:
+            await vc.move_to(canal)
+
+    except discord.ClientException:
+        vc = guild.voice_client
+
+    except Exception as e:
+        print("Error conectando voz:", e)
+        return None
 
     return vc
 
