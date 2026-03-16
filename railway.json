@@ -1,6 +1,8 @@
 {
-  "$schema": "https://railway.app/railway.schema.json",
   "build": {
-    "aptPackages": ["ffmpeg"]
+    "aptPackages": [
+      "ffmpeg",
+      "libsodium-dev"
+    ]
   }
 }
