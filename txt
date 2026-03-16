@@ -1,4 +1,4 @@
 git pull
-git add .py
-git commit -m "cambios extraños que hay en mi"
+git add .
+git commit -m "cambios extraños que hay en vos"
 git push
