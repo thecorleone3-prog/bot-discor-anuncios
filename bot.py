@@ -440,20 +440,18 @@ async def on_ready():
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
 
-    # CONECTAR A CANALES DE VOZ
-    for guild_id, config in servers_config.items():
+    @bot.event
+    async def on_ready():
 
-        guild = bot.get_guild(int(guild_id))
+        for g in bot.guilds:
+            print(g.id, g.name)
 
-        if guild:
+        ahora = datetime.now(ARG_TZ)
+        espera = 60 - ahora.second
+        await asyncio.sleep(espera)
 
-            try:
-                canal_voz = config.get("CANAL_VOZ_ID")
-
-                if canal_voz:
-                    vc = await asegurar_conexion_voz(guild, canal_voz)
-            except Exception as e:
-                print("Error conectando voz:", e)
+        if not check_scheduled_announcements.is_running():
+            check_scheduled_announcements.start()
             
 # =============================
 # PANEL DE CONFIGURACION DE PLANTILLA
@@ -512,20 +510,33 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     vc = guild.voice_client
 
-    if vc is None:
-        await asyncio.sleep(2)  # ⬅️ pequeño delay clave en Railway
-        vc = await canal.connect(reconnect=True)
+    # ✅ SI YA ESTÁ CONECTADO, usar ese"
+    if vc and vc.is_connected():
 
-    elif vc.channel.id != canal_voz_id:
-        await vc.move_to(canal)
+        # si está en otro canal → mover
+        if vc.channel.id != canal_voz_id:
+            await vc.move_to(canal)
 
-    return vc
+        return vc
 
+    # ⛔ evitar reconexiones locas
+    try:
+        await asyncio.sleep(1)
+        vc = await canal.connect(reconnect=False)
+        return vc
+    except Exception as e:
+        print("Error conectando voz:", e)
+        return None
+    
 async def reproducir_aviso(guild, canal_voz_id, texto):
 
     lock = voice_locks.setdefault(guild.id, asyncio.Lock())
 
     async with lock:
+
+        vc = guild.voice_client
+        if vc and vc.is_connecting():
+            return
 
         try:
 
