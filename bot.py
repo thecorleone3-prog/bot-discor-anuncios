@@ -511,11 +511,15 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
     vc = guild.voice_client
 
     # ✅ SI YA ESTÁ CONECTADO, usar ese"
-    if vc and vc.is_connected():
+    if vc is None:
 
-        # si está en otro canal → mover
-        if vc.channel.id != canal_voz_id:
-            await vc.move_to(canal)
+        try:
+            vc = await canal.connect(reconnect=True)
+        except Exception as e:
+            print({e})
+            return None
+    elif vc.channel.id != canal_voz_id:  
+        await vc.move_to(canal)
 
         return vc
 
@@ -536,6 +540,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
         vc = guild.voice_client
         if vc is None:
+            print({guild.id})
             return
 
         try:
