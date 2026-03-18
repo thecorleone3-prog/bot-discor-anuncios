@@ -451,7 +451,7 @@ async def on_ready():
                 canal_voz = config.get("CANAL_VOZ_ID")
 
                 if canal_voz:
-                    await asegurar_conexion_voz(guild, canal_voz)
+                    vc = await asegurar_conexion_voz(guild, canal_voz)
             except Exception as e:
                 print("Error conectando voz:", e)
             
@@ -513,7 +513,8 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
     vc = guild.voice_client
 
     if vc is None:
-        vc = await canal.connect()
+        await asyncio.sleep(2)  # ⬅️ pequeño delay clave en Railway
+        vc = await canal.connect(reconnect=true)
 
     elif vc.channel.id != canal_voz_id:
         await vc.move_to(canal)
@@ -543,9 +544,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
             vc.play(
                 discord.FFmpegPCMAudio(
-                    executable="C:/ffmpeg/bin/ffmpeg.exe",
-                    source=archivo
-                )
+                    source=archivo)
             )
 
             while vc.is_playing():
