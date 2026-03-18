@@ -543,7 +543,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
             vc.play(
                 discord.FFmpegPCMAudio(
-                    executable="C:/ffmpeg/bin/ffmpeg.exe",
+                    executable="ffmpeg",
                     source=archivo
                 )
             )
