@@ -10,7 +10,6 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
-import os
 os.system("ffmpeg -version")
 ARG_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
@@ -97,7 +96,6 @@ def save_data(data):
 
 
 servers_config=load_data()
-voice_locks = {}
 
 # =============================
 # BOT
@@ -377,52 +375,59 @@ async def panelavisos(ctx):
 # LOOP AVISOS VOZ
 # =============================
 
-@tasks.loop(seconds=30)
+@tasks.loop(seconds=60)
 async def check_scheduled_announcements():
 
-    ahora = datetime.now(ARG_TZ).strftime("%H:%M")
+    ahora=datetime.now(ARG_TZ).strftime("%H:%M")
 
-    for guild_id, config in servers_config.items():
+    for guild_id,config in servers_config.items():
 
-        guild = bot.get_guild(int(guild_id))
-        if guild:
-            await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
+        for aviso in config["avisos"]:
 
-async def procesar_avisos_guild(guild_id, config, ahora):
+            if not aviso["activo"]:
+                continue
 
-    guild = bot.get_guild(int(guild_id))
+            if aviso["hora"]!=ahora:
+                continue
 
-    if guild is None:
-        return
+            if aviso["ultimo_ejecutado"]==ahora:
+                continue
 
-    guardar = False
+            aviso["ultimo_ejecutado"]=ahora
 
-    for aviso in config["avisos"]:
+            save_data(servers_config)
 
-        if not aviso["activo"]:
-            continue
+            guild=bot.get_guild(int(guild_id))
 
-        if aviso["hora"] != ahora:
-            continue
+            canal=guild.get_channel(config["CANAL_VOZ_ID"])
+               
+            try:
 
-        if aviso["ultimo_ejecutado"] == ahora:
-            continue
+                vc=guild.voice_client
 
-        aviso["ultimo_ejecutado"] = ahora
-        guardar = True
+                if vc is None:
+                    vc=await canal.connect()
 
-        canal_voz = config.get("CANAL_VOZ_ID")
+                archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
 
-        if canal_voz:
+                tts = gTTS(text=aviso["mensaje"],lang="es")
+                tts.save(archivo)
 
-            await reproducir_aviso(
-                guild,
-                canal_voz,
-                aviso["mensaje"]
-            )
+                vc.play(
+                    discord.FFmpegPCMAudio(
+                        executable="ffmpeg",
+                        source=archivo
+                    )
+                )
 
-    if guardar:
-        save_data(servers_config)
+                while vc.is_playing():
+                    await asyncio.sleep(1)
+
+                os.remove(archivo)
+
+            except Exception as e:
+                print("Error aviso voz:", e)
+
 # =============================
 # READY
 # =============================
@@ -439,7 +444,19 @@ async def on_ready():
 
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
-            
+
+    # CONECTAR A CANALES DE VOZ
+    for guild_id, config in servers_config.items():
+
+        guild = bot.get_guild(int(guild_id))
+
+        if guild:
+
+            try:
+                await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
+            except Exception as e:
+                print("Error conectando voz:", e)
+                
 # =============================
 # PANEL DE CONFIGURACION DE PLANTILLA"
 # =============================
@@ -487,7 +504,7 @@ class ConfigPlantillaView(discord.ui.View):
 
         except asyncio.TimeoutError:
             await enviar_temporal(interaction, "❌ Tiempo agotado. No se subió ninguna plantilla.")
-    
+
 async def asegurar_conexion_voz(guild, canal_voz_id):
 
         canal = guild.get_channel(canal_voz_id)
@@ -532,8 +549,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
     except Exception as e:
         print("Error aviso voz:", e)
-
-
+        
 async def actualizar_panel_plantilla(guild):
 
     guild_id = str(guild.id)
