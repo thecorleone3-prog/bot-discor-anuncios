@@ -11,7 +11,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import os
-
+os.system("ffmpeg -version")
 ARG_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
 load_dotenv()
@@ -543,7 +543,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
                 await asyncio.sleep(1)
 
             vc.play(
-                discord.FFmpegPCMAudio(source=archivo)
+                discord.FFmpegPCMAudio(executable="ffmpeg", source=archivo)
            )
 
             while vc.is_playing():
