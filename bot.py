@@ -535,7 +535,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
     async with lock:
 
         vc = guild.voice_client
-        if vc is not None and vc.is_playing():
+        if vc is None:
             return
 
         try:
@@ -555,10 +555,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
             vc.play(
                 discord.FFmpegPCMAudio(
-    executable=r"C:\ffmpeg\bin\ffmpeg.exe",
-    source=archivo
-)
-           )
+                    executable="ffmpeg",source=archivo))
 
             while vc.is_playing():
                 await asyncio.sleep(1)
