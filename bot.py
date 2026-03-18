@@ -40,6 +40,7 @@ DEFAULT_CONFIG = {
     }
 }
 
+print("carpintero")
 # =============================
 # LOAD DATA + MIGRACION
 # =============================
