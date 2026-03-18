@@ -543,9 +543,8 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
                 await asyncio.sleep(1)
 
             vc.play(
-                discord.FFmpegPCMAudio(
-                    source=archivo)
-            )
+                discord.FFmpegPCMAudio(source=archivo)
+           )
 
             while vc.is_playing():
                 await asyncio.sleep(1)
