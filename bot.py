@@ -561,6 +561,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
             while vc.is_playing():
                 await asyncio.sleep(1)
 
+            await vc.disconnect()
             os.remove(archivo)
 
         except Exception as e:
