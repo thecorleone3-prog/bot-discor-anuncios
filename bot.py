@@ -514,7 +514,7 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     if vc is None:
         await asyncio.sleep(2)  # ⬅️ pequeño delay clave en Railway
-        vc = await canal.connect(reconnect=true)
+        vc = await canal.connect(reconnect=True)
 
     elif vc.channel.id != canal_voz_id:
         await vc.move_to(canal)
