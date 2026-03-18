@@ -454,7 +454,7 @@ async def on_ready():
             check_scheduled_announcements.start()
             
 # =============================
-# PANEL DE CONFIGURACION DE PLANTILLA
+# PANEL DE CONFIGURACION DE PLANTILLA"
 # =============================
 async def enviar_temporal(interaction, texto, segundos=10):
 
