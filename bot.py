@@ -11,13 +11,35 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from dotenv import load_dotenv
 import os
+import asyncio
+
+voice_locks = {}  # agregar al inicio, junto a 'servers_config'
+
+async def asegurar_conexion_voz(guild, canal_voz_id):
+    canal = guild.get_channel(canal_voz_id)
+    if canal is None:
+        return None
+
+    vc = guild.voice_client
+    lock = voice_locks.setdefault(guild.id, asyncio.Lock())
+
+    async with lock:
+        # si ya está conectado
+        if vc and vc.is_connected():
+            if vc.channel.id != canal_voz_id:
+                await vc.move_to(canal)
+            return vc
+
+        # intentar conectar
+        try:
+            vc = await canal.connect(reconnect=True)
+            print(f"Conectado a voz en {canal.name}")
+            return vc
+        except Exception as e:
+            print("Error conectando voz:", e)
+            return None
+        
 os.system("ffmpeg -version")
-
-if not os.path.exists("silencio.mp3"):
-    from pydub import AudioSegment
-    silencio = AudioSegment.silent(duration=100)  # 0.1 segundos
-    silencio.export("silencio.mp3", format="mp3")
-
 ARG_TZ = ZoneInfo("America/Argentina/Buenos_Aires")
 
 load_dotenv()
@@ -436,21 +458,29 @@ async def procesar_avisos_guild(guild_id, config, ahora):
 @bot.event
 async def on_ready():
     print("Bot listo")
-    for guild_id, config in servers_config.items():
-        guild = bot.get_guild(int(guild_id))
-        if guild:
-            # Reconexión permanente
-            vc = await asegurar_conexion_voz_permanente(guild, config["CANAL_VOZ_ID"])
-            if vc:
-                # Arrancar loop de silencio
-                asyncio.create_task(mantener_voz_activa(vc))
-
-    # Iniciar loop de avisos
+    
+    # Espera para sincronizar con segundos
     ahora = datetime.now(ARG_TZ)
     espera = 60 - ahora.second
     await asyncio.sleep(espera)
+
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
+
+    # ----------------------
+    # Mantenerse conectado a voz
+    # ----------------------
+    async def conectar_voz_permanente():
+        while True:
+            for guild_id, config in servers_config.items():
+                guild = bot.get_guild(int(guild_id))
+                if guild:
+                    canal_voz_id = config.get("CANAL_VOZ_ID")
+                    if canal_voz_id:
+                        await asegurar_conexion_voz(guild, canal_voz_id)
+            await asyncio.sleep(10)  # intenta reconectar cada 10 segundos
+
+    asyncio.create_task(conectar_voz_permanente())
             
 # =============================
 # PANEL DE CONFIGURACION DE PLANTILLA"
@@ -499,45 +529,19 @@ class ConfigPlantillaView(discord.ui.View):
 
         except asyncio.TimeoutError:
             await enviar_temporal(interaction, "❌ Tiempo agotado. No se subió ninguna plantilla.")
-
-async def asegurar_conexion_voz_permanente(guild, canal_voz_id):
-    canal = guild.get_channel(canal_voz_id)
-    if canal is None:
-        return None
-
-    while True:
-        vc = guild.voice_client
-        try:
-            if vc and vc.is_connected():
-                if vc.channel.id != canal_voz_id:
-                    await vc.move_to(canal)
-                return vc
-            else:
-                vc = await canal.connect(reconnect=True)
-                print(f"Conectado a {canal.name}")
-                return vc
-        except Exception as e:
-            print("Error conectando voz, reintentando en 5s:", e)
-            await asyncio.sleep(5)
     
 async def reproducir_aviso(guild, canal_voz_id, texto):
-
     lock = voice_locks.setdefault(guild.id, asyncio.Lock())
 
     async with lock:
         canal = guild.get_channel(canal_voz_id)
         if canal is None:
             return
-            
         
         vc = guild.voice_client
         if vc is None or not vc.is_connected():
-            try:
-                vc = await canal.connect(reconnect=True)
-                print(f"Conectado a voz en {canal.name}")
-            
-            except Exception as e:
-                print("Error conectando voz:",e)
+            vc = await asegurar_conexion_voz(guild, canal_voz_id)
+            if vc is None:
                 return
 
         archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
@@ -545,9 +549,9 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
         tts.save(archivo)
 
         while vc.is_playing():
-            await asyncio.sleep(1)
+            await asyncio.sleep(0.5)
 
-        vc.play(discord.FFmpegPCMAudio(executable="ffmpeg",source=archivo))
+        vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=archivo))
 
         while vc.is_playing():
             await asyncio.sleep(0.5)
@@ -769,15 +773,7 @@ async def panelplantilla(ctx):
     try:
         await ctx.message.delete()
     except:
-        pass
-
-async def mantener_voz_activa(vc: discord.VoiceClient):
-    while True:
-        if vc.is_connected():
-            vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source="silencio.mp3"))
-            while vc.is_playing():
-                await asyncio.sleep(0.1)
-        await asyncio.sleep(10)      
+        pass  
 
 # =============================
 # RUN
