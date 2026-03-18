@@ -39,7 +39,7 @@ DEFAULT_CONFIG = {
         "avisos": []
     }
 }
-
+print("arbol")
 print("carpintero")
 # =============================
 # LOAD DATA + MIGRACION
