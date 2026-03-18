@@ -458,8 +458,6 @@ async def procesar_avisos_guild(guild_id, config, ahora):
 @bot.event
 async def on_ready():
     print("Bot listo")
-    
-    # Espera para sincronizar con segundos
     ahora = datetime.now(ARG_TZ)
     espera = 60 - ahora.second
     await asyncio.sleep(espera)
@@ -531,32 +529,29 @@ class ConfigPlantillaView(discord.ui.View):
             await enviar_temporal(interaction, "❌ Tiempo agotado. No se subió ninguna plantilla.")
     
 async def reproducir_aviso(guild, canal_voz_id, texto):
-    lock = voice_locks.setdefault(guild.id, asyncio.Lock())
+    canal = guild.get_channel(canal_voz_id)
+    if canal is None:
+        return
 
-    async with lock:
-        canal = guild.get_channel(canal_voz_id)
-        if canal is None:
-            return
-        
-        vc = guild.voice_client
-        if vc is None or not vc.is_connected():
-            vc = await asegurar_conexion_voz(guild, canal_voz_id)
-            if vc is None:
-                return
+    try:
+        # Conectar solo para el aviso
+        vc = await canal.connect()
 
         archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
         tts = gTTS(text=texto, lang="es")
         tts.save(archivo)
 
-        while vc.is_playing():
-            await asyncio.sleep(0.5)
-
         vc.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=archivo))
-
         while vc.is_playing():
             await asyncio.sleep(0.5)
 
         os.remove(archivo)
+
+        # Desconectar después de reproducir
+        await vc.disconnect()
+
+    except Exception as e:
+        print("Error reproduciendo aviso:", e)
 
 
 
