@@ -5,3 +5,4 @@ numpy
 gTTS
 python-dotenv
 Pillow
+pydub
