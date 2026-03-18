@@ -510,7 +510,7 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     vc = guild.voice_client
 
-    # ✅ SI YA ESTÁ CONECTADO, usar ese
+    # ✅ SI YA ESTÁ CONECTADO, usar ese"
     if vc and vc.is_connected():
 
         # si está en otro canal → mover
