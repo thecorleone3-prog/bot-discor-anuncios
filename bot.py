@@ -533,31 +533,34 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
     lock = voice_locks.setdefault(guild.id, asyncio.Lock())
 
     async with lock:
-
-        vc = guild.voice_client
         canal = guild.get_channel(canal_voz_id)
+        if canal is None:
+            return
+            
+        
+        vc = guild.voice_client
         if vc is None or not vc.is_connected():
             try:
-
                 vc = await canal.connect(reconnect=True)
-
+                print(f"Conectado a voz en {canal.name}")
+            
             except Exception as e:
                 print("Error conectando voz:",e)
                 return
 
-            archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
-            tts = gTTS(text=texto, lang="es")
-            tts.save(archivo)
+        archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
+        tts = gTTS(text=texto, lang="es")
+        tts.save(archivo)
 
-            while vc.is_playing():
-                await asyncio.sleep(1)
+        while vc.is_playing():
+            await asyncio.sleep(1)
 
-            vc.play(discord.FFmpegPCMAudio(executable="ffmpeg",source=archivo))
+        vc.play(discord.FFmpegPCMAudio(executable="ffmpeg",source=archivo))
 
-            while vc.is_playing():
-                await asyncio.sleep(0.5)
+        while vc.is_playing():
+            await asyncio.sleep(0.5)
 
-            os.remove(archivo)
+        os.remove(archivo)
 
 
 
