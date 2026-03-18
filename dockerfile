@@ -12,5 +12,5 @@ COPY . .
 # Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ejecutar el bot
+# Ejecutar el bot si
 CMD ["python", "bot.py"]
