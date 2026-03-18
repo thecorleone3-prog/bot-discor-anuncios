@@ -408,7 +408,7 @@ async def check_scheduled_announcements():
                 if vc is None:
                     vc=await canal.connect()
 
-                archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
+                archivo=f"aviso_{guild_id}.mp3"
 
                 tts = gTTS(text=aviso["mensaje"],lang="es")
                 tts.save(archivo)
@@ -434,9 +434,8 @@ async def check_scheduled_announcements():
 
 @bot.event
 async def on_ready():
-
-    for g in bot.guilds:
-        print(g.id, g.name)
+   
+    print("Bot listo")
 
     ahora=datetime.now(ARG_TZ)
     espera=60-ahora.second
@@ -508,10 +507,12 @@ class ConfigPlantillaView(discord.ui.View):
 async def asegurar_conexion_voz(guild, canal_voz_id):
 
         canal = guild.get_channel(canal_voz_id)
-        vc = guild.voice_client
+        
         if canal is None: 
             return None
+        
         vc = guild.voice_client
+
         if vc is None:
             vc = await canal.connect()
 
@@ -527,7 +528,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
         if vc is None: 
             return
-        archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
+        archivo = f"alerta_{guild.id}.mp3"
 
         tts = gTTS(text=texto, lang="es")
         tts.save(archivo)
