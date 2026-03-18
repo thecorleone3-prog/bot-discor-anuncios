@@ -535,7 +535,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
     async with lock:
 
         vc = guild.voice_client
-        if vc and vc.is_connecting():
+        if vc is not None and vc.is_playing():
             return
 
         try:
