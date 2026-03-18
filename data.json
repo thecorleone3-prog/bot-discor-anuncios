@@ -14,6 +14,12 @@
                     "ultimo_ejecutado": ""
                 },
                 {
+                    "hora": "14:20",
+                    "mensaje": "rambo",
+                    "activo": true,
+                    "ultimo_ejecutado": "14:20"
+                },
+                {
                     "hora": "18:00",
                     "mensaje": "subir historias bono",
                     "activo": true,
