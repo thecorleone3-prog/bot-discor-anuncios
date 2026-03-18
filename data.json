@@ -8,18 +8,22 @@
             "CANAL_VOZ_ID": 1256002493951770697,
             "avisos": [
                 {
-                    "hora": "17:19",
-                    "mensaje": "jajajajja",
+                    "hora": "12:00",
+                    "mensaje": "activar bono manual",
                     "activo": true,
-                    "ultimo_ejecutado_fecha": "2026-03-16",
-                    "ultimo_ejecutado": "17:19"
+                    "ultimo_ejecutado": ""
                 },
                 {
-                    "hora": "22:27",
-                    "mensaje": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+                    "hora": "18:00",
+                    "mensaje": "subir historias bono",
                     "activo": true,
-                    "ultimo_ejecutado_fecha": null,
-                    "ultimo_ejecutado": "22:27"
+                    "ultimo_ejecutado": ""
+                },
+                {
+                    "hora": "22:00",
+                    "mensaje": "subir historias bono",
+                    "activo": true,
+                    "ultimo_ejecutado": ""
                 }
             ],
             "panel_id": 1483210058283352137,

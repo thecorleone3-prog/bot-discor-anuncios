@@ -647,7 +647,7 @@ async def on_reaction_add(reaction, user):
     await reproducir_aviso(
         guild,
         config["CANAL_VOZ_ID"],
-        "Carga pendiente"
+        "Carga en espera"
     )
 
 @bot.event
@@ -672,7 +672,7 @@ async def on_message(message):
             await reproducir_aviso(
                 message.guild,
                 config["CANAL_VOZ_ID"],
-                "Premio en espera"
+                "Premio pendiente"
             )
 
     # LIMPIEZA CANAL AVISOS
