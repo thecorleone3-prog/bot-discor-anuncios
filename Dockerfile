@@ -1,16 +1,15 @@
-FROM python:3.11
+FROM python:3.13-slim
 
-# Instalar ffmpeg y libs necesarias
-RUN apt-get update && apt-get install -y ffmpeg libsodium-dev
+ENV DEBIAN_FRONTEND=noninteractive
 
-# Carpeta de trabajo
+RUN apt-get update && \
+    apt-get install -y ffmpeg && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
 WORKDIR /app
+COPY . /app
 
-# Copiar archivos del proyecto
-COPY . .
-
-# Instalar dependencias
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Ejecutar el bot si
 CMD ["python", "bot.py"]
