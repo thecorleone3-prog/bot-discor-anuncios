@@ -71,6 +71,24 @@ def load_data():
 
     return servers
 
+def get_guild_config(guild_id):
+
+    if guild_id not in servers_config:
+
+        servers_config[guild_id] = {
+            "CANAL_CARGAS_ID": None,
+            "CANAL_PREMIOS_ID": None,
+            "CANAL_CREACION_ID": None,
+            "CANAL_AVISOS_ID": None,
+            "CANAL_VOZ_ID": None,
+            "panel_id": None,
+            "panel_plantilla_id": None,
+            "avisos": []
+        }
+
+        save_data(servers_config)
+
+    return servers_config[guild_id]
 
 def save_data(data):
 
@@ -79,6 +97,7 @@ def save_data(data):
 
 
 servers_config=load_data()
+voice_locks = {}
 
 # =============================
 # BOT
@@ -97,7 +116,7 @@ bot=commands.Bot(command_prefix="!",intents=intents)
 
 def construir_panel(guild_id):
 
-    config=servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     texto="📢 **PANEL DE AVISOS**\n\n"
 
@@ -125,6 +144,7 @@ class AgregarAvisoModal(Modal,title="Agregar aviso"):
     mensaje=TextInput(label="Mensaje",style=discord.TextStyle.paragraph)
 
     async def on_submit(self,interaction:discord.Interaction):
+        
 
         guild_id=str(interaction.guild.id)
 
@@ -135,7 +155,9 @@ class AgregarAvisoModal(Modal,title="Agregar aviso"):
             "ultimo_ejecutado":""
         }
 
-        servers_config[guild_id]["avisos"].append(aviso)
+        config = get_guild_config(guild_id)
+
+        config["avisos"].append(aviso)
 
         servers_config[guild_id]["avisos"].sort(key=lambda x:x["hora"])
 
@@ -300,7 +322,7 @@ async def actualizar_panel(guild):
 
     guild_id=str(guild.id)
 
-    config=servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     canal=guild.get_channel(config["CANAL_AVISOS_ID"])
 
@@ -339,7 +361,9 @@ async def panelavisos(ctx):
 
     guild_id=str(ctx.guild.id)
 
-    if ctx.channel.id!=servers_config[guild_id]["CANAL_AVISOS_ID"]:
+    config = get_guild_config(guild_id)
+
+    if ctx.channel.id != config["CANAL_AVISOS_ID"]:
         return
 
     await actualizar_panel(ctx.guild)
@@ -353,48 +377,52 @@ async def panelavisos(ctx):
 # LOOP AVISOS VOZ
 # =============================
 
-@tasks.loop(seconds=60)
+@tasks.loop(seconds=30)
 async def check_scheduled_announcements():
 
-    ahora=datetime.now(ARG_TZ).strftime("%H:%M")
+    ahora = datetime.now(ARG_TZ).strftime("%H:%M")
 
-    for guild_id,config in servers_config.items():
+    for guild_id, config in servers_config.items():
 
-        for aviso in config["avisos"]:
+        asyncio.create_task(
+            procesar_avisos_guild(guild_id, config, ahora)
+        )
 
-            if not aviso["activo"]:
-                continue
+async def procesar_avisos_guild(guild_id, config, ahora):
 
-            if aviso["hora"]!=ahora:
-                continue
+    guild = bot.get_guild(int(guild_id))
 
-            if aviso["ultimo_ejecutado"]==ahora:
-                continue
+    if guild is None:
+        return
 
-            aviso["ultimo_ejecutado"]=ahora
+    guardar = False
 
-            save_data(servers_config)
+    for aviso in config["avisos"]:
 
-            guild=bot.get_guild(int(guild_id))
+        if not aviso["activo"]:
+            continue
 
-            canal=guild.get_channel(config["CANAL_VOZ_ID"])
+        if aviso["hora"] != ahora:
+            continue
 
-            try:
+        if aviso["ultimo_ejecutado"] == ahora:
+            continue
 
-                vc = await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
+        aviso["ultimo_ejecutado"] = ahora
+        guardar = True
 
-                if vc is None:
-                    return
+        canal_voz = config.get("CANAL_VOZ_ID")
 
-                await reproducir_aviso(
-                    guild,
-                    config["CANAL_VOZ_ID"],
-                    aviso["mensaje"]
-                )
-            except Exception as e:
+        if canal_voz:
 
-                print("Error aviso:",e)
+            await reproducir_aviso(
+                guild,
+                canal_voz,
+                aviso["mensaje"]
+            )
 
+    if guardar:
+        save_data(servers_config)
 # =============================
 # READY
 # =============================
@@ -402,17 +430,30 @@ async def check_scheduled_announcements():
 @bot.event
 async def on_ready():
 
-    print("Bot listo")
+    for g in bot.guilds:
+        print(g.id, g.name)
 
-    await asyncio.sleep(10)  # importante
-
-    ahora = datetime.now(ARG_TZ)
-    espera = 60 - ahora.second
+    ahora=datetime.now(ARG_TZ)
+    espera=60-ahora.second
     await asyncio.sleep(espera)
 
     if not check_scheduled_announcements.is_running():
         check_scheduled_announcements.start()
 
+    # CONECTAR A CANALES DE VOZ
+    for guild_id, config in servers_config.items():
+
+        guild = bot.get_guild(int(guild_id))
+
+        if guild:
+
+            try:
+                canal_voz = config.get("CANAL_VOZ_ID")
+
+                if canal_voz:
+                    await asegurar_conexion_voz(guild, canal_voz)
+            except Exception as e:
+                print("Error conectando voz:", e)
             
 # =============================
 # PANEL DE CONFIGURACION DE PLANTILLA
@@ -471,68 +512,55 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
 
     vc = guild.voice_client
 
-    try:
+    if vc is None:
+        vc = await canal.connect()
 
-        if vc is None or not vc.is_connected():
-            vc = await canal.connect(reconnect=True)
-
-        elif vc.channel.id != canal_voz_id:
-            await vc.move_to(canal)
-
-    except discord.ClientException:
-        vc = guild.voice_client
-
-    except Exception as e:
-        print("Error conectando voz:", e)
-        return None
+    elif vc.channel.id != canal_voz_id:
+        await vc.move_to(canal)
 
     return vc
 
-import io
-
 async def reproducir_aviso(guild, canal_voz_id, texto):
 
-    try:
+    lock = voice_locks.setdefault(guild.id, asyncio.Lock())
 
-        vc = await asegurar_conexion_voz(guild, canal_voz_id)
+    async with lock:
 
-        if vc is None:
-            return
+        try:
 
-        archivo = f"tts_{guild.id}.mp3"
+            vc = await asegurar_conexion_voz(guild, canal_voz_id)
 
-        # generar audio
-        tts = gTTS(text=texto, lang="es")
-        tts.save(archivo)
+            if vc is None:
+                return
 
-        while vc.is_playing():
-            await asyncio.sleep(1)
+            archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
 
-        vc.play(
-            discord.FFmpegPCMAudio(
-                archivo,
-                executable="ffmpeg"
+            tts = gTTS(text=texto, lang="es")
+            tts.save(archivo)
+
+            while vc.is_playing():
+                await asyncio.sleep(1)
+
+            vc.play(
+                discord.FFmpegPCMAudio(
+                    executable="C:/ffmpeg/bin/ffmpeg.exe",
+                    source=archivo
+                )
             )
-        )
 
-        while vc.is_playing():
-            await asyncio.sleep(1)
+            while vc.is_playing():
+                await asyncio.sleep(1)
 
-        os.remove(archivo)
+            os.remove(archivo)
 
-        # desconectar para evitar sockets rotos
-        await asyncio.sleep(1)
+        except Exception as e:
+            print("Error aviso voz:", e)
 
-        if vc.is_connected():
-            await vc.disconnect()
-
-    except Exception as e:
-        print("Error aviso voz:", e)
 
 async def actualizar_panel_plantilla(guild):
 
     guild_id = str(guild.id)
-    config = servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     canal = guild.get_channel(config["CANAL_AVISOS_ID"])
 
@@ -601,7 +629,7 @@ async def on_reaction_add(reaction, user):
         return
 
     guild_id = str(guild.id)
-    config = servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     # solo canal de cargas
     if reaction.message.channel.id != config["CANAL_CARGAS_ID"]:
@@ -630,7 +658,7 @@ async def on_message(message):
     
     await bot.process_commands(message)
     guild_id = str(message.guild.id)
-    config = servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     # =========================
     # AVISO CANAL PREMIOS
@@ -663,7 +691,7 @@ async def on_message(message):
                 pass
 
     guild_id = str(message.guild.id)
-    canal_premios_id = servers_config[guild_id].get("CANAL_PREMIOS_ID")
+    canal_premios_id = config.get("CANAL_PREMIOS_ID")
 
     if message.channel.id != canal_premios_id:
         return
@@ -732,7 +760,7 @@ async def on_message(message):
 async def panelplantilla(ctx):
 
     guild_id = str(ctx.guild.id)
-    config = servers_config[guild_id]
+    config = get_guild_config(guild_id)
 
     if ctx.channel.id != config["CANAL_AVISOS_ID"]:
         return

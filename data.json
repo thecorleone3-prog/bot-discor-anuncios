@@ -1,29 +1,102 @@
 {
     "servers": {
-
         "1256002493331017800": {
             "CANAL_CARGAS_ID": 1446983648091046032,
             "CANAL_PREMIOS_ID": 1284336904095010826,
             "CANAL_CREACION_ID": 333333333333,
-            "CANAL_AVISOS_ID": 1326536014788825178,
-            "CANAL_VOZ_ID": 1403061058297397248,
+            "CANAL_AVISOS_ID": 1483209038178287696,
+            "CANAL_VOZ_ID": 1256002493951770697,
             "avisos": [
                 {
-                    "hora": "00:17",
-                    "mensaje": "asddasdasda",
+                    "hora": "17:19",
+                    "mensaje": "jajajajja",
                     "activo": true,
-                    "ultimo_ejecutado": "00:17"
+                    "ultimo_ejecutado_fecha": "2026-03-16",
+                    "ultimo_ejecutado": "17:19"
                 },
                 {
-                    "hora": "00:18",
+                    "hora": "22:27",
                     "mensaje": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
                     "activo": true,
-                    "ultimo_ejecutado": "00:18"
+                    "ultimo_ejecutado_fecha": null,
+                    "ultimo_ejecutado": "22:27"
                 }
             ],
-            "panel_id": 1482940146222366851,
-            "panel_plantilla_id": 1482940287759421542,
+            "panel_id": 1483210058283352137,
+            "panel_plantilla_id": 1483210147324100800,
             "plantilla": "plantilla_1256002493331017800.png"
+        },
+        "1475309208860889250": {
+            "CANAL_CARGAS_ID": 1475309211138134133,
+            "CANAL_PREMIOS_ID": 1475309210832212149,
+            "CANAL_CREACION_ID": 333333333333,
+            "CANAL_AVISOS_ID": 1475309210593132655,
+            "CANAL_VOZ_ID": 1475309210832212143,
+            "avisos": [
+                {
+                    "hora": "00:00",
+                    "mensaje": "BONO ACTIVO",
+                    "activo": true,
+                    "ultimo_ejecutado": "00:00"
+                },
+                {
+                    "hora": "02:00",
+                    "mensaje": "comienza turno de Blade",
+                    "activo": true,
+                    "ultimo_ejecutado": "02:00"
+                },
+                {
+                    "hora": "14:00",
+                    "mensaje": "comienza turno de Blade",
+                    "activo": true,
+                    "ultimo_ejecutado": "14:00"
+                },
+                {
+                    "hora": "15:00",
+                    "mensaje": "BONO ACTIVO",
+                    "activo": true,
+                    "ultimo_ejecutado": "15:00"
+                },
+                {
+                    "hora": "19:59",
+                    "mensaje": "ACTIVAR BONO DE LAS 20 HORAS",
+                    "activo": true,
+                    "ultimo_ejecutado_fecha": null,
+                    "ultimo_ejecutado": "19:59"
+                },
+                {
+                    "hora": "20:00",
+                    "mensaje": "comienza turno de Ares",
+                    "activo": true,
+                    "ultimo_ejecutado": "20:00"
+                },
+                {
+                    "hora": "21:00",
+                    "mensaje": "APAGAR BONO",
+                    "activo": true,
+                    "ultimo_ejecutado": "21:00"
+                }
+            ],
+            "panel_id": 1483208339235274752,
+            "panel_plantilla_id": 1483208587831410828,
+            "plantilla": "plantilla_1475309208860889250.png"
+        },
+        "1413572808285360180": {
+            "CANAL_CARGAS_ID": 1413578507929260143,
+            "CANAL_PREMIOS_ID": 1413583832518492351,
+            "CANAL_CREACION_ID": null,
+            "CANAL_AVISOS_ID": 1483282594324811786,
+            "CANAL_VOZ_ID": 1413761281869217903,
+            "avisos": [
+                {
+                    "hora": "23:30",
+                    "mensaje": "este bot no esta configurado, armar cronograma de anuncios en configurar bot",
+                    "activo": true,
+                    "ultimo_ejecutado": "23:30"
+                }
+            ],
+            "panel_id": 1483289252337811557,
+            "panel_plantilla_id": 1483289320851767428
         }
     }
 }
