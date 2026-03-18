@@ -511,15 +511,11 @@ async def asegurar_conexion_voz(guild, canal_voz_id):
     vc = guild.voice_client
 
     # ✅ SI YA ESTÁ CONECTADO, usar ese"
-    if vc is None:
+    if vc and vc.is_connected():
 
-        try:
-            vc = await canal.connect(reconnect=True)
-        except Exception as e:
-            print({e})
-            return None
-    elif vc.channel.id != canal_voz_id:  
-        await vc.move_to(canal)
+        # si está en otro canal → mover
+        if vc.channel.id != canal_voz_id:
+            await vc.move_to(canal)
 
         return vc
 
@@ -539,8 +535,7 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
     async with lock:
 
         vc = guild.voice_client
-        if vc is None:
-            print({guild.id})
+        if vc is not None and vc.is_playing():
             return
 
         try:
@@ -560,7 +555,10 @@ async def reproducir_aviso(guild, canal_voz_id, texto):
 
             vc.play(
                 discord.FFmpegPCMAudio(
-                    executable="ffmpeg",source=archivo))
+    executable=r"C:\ffmpeg\bin\ffmpeg.exe",
+    source=archivo
+)
+           )
 
             while vc.is_playing():
                 await asyncio.sleep(1)
