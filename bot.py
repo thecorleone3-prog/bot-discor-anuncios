@@ -384,9 +384,9 @@ async def check_scheduled_announcements():
 
     for guild_id, config in servers_config.items():
 
-        asyncio.create_task(
-            procesar_avisos_guild(guild_id, config, ahora)
-        )
+        guild = bot.get_guild(int(guild_id))
+        if guild:
+            await asegurar_conexion_voz(guild, config["CANAL_VOZ_ID"])
 
 async def procesar_avisos_guild(guild_id, config, ahora):
 
@@ -487,73 +487,51 @@ class ConfigPlantillaView(discord.ui.View):
 
         except asyncio.TimeoutError:
             await enviar_temporal(interaction, "❌ Tiempo agotado. No se subió ninguna plantilla.")
-
+    
 async def asegurar_conexion_voz(guild, canal_voz_id):
 
-    canal = guild.get_channel(canal_voz_id)
-
-    if canal is None:
-        return None
-
-    vc = guild.voice_client
-
-    # ✅ SI YA ESTÁ CONECTADO, usar ese"
-    if vc and vc.is_connected():
-
-        # si está en otro canal → mover
-        if vc.channel.id != canal_voz_id:
-            await vc.move_to(canal)
-
-        return vc
-
-    # ⛔ evitar reconexiones locas
-    try:
-        await asyncio.sleep(1)
-        vc = await canal.connect(reconnect=False)
-        return vc
-    except Exception as e:
-        print("Error conectando voz:", e)
-        return None
-    
-async def reproducir_aviso(guild, canal_voz_id, texto):
-
-    lock = voice_locks.setdefault(guild.id, asyncio.Lock())
-
-    async with lock:
-
+        canal = guild.get_channel(canal_voz_id)
         vc = guild.voice_client
-        if vc is not None and vc.is_playing():
+        if canal is None: 
+            return None
+        vc = guild.voice_client
+        if vc is None:
+            vc = await canal.connect()
+
+        elif vc.channel.id != canal_voz_id:
+            await vc.move_to(canal)
+        return vc
+
+async def reproducir_aviso(guild, canal_voz_id, texto):
+        
+    try:
+
+        vc = await asegurar_conexion_voz(guild, canal_voz_id)    
+
+        if vc is None: 
             return
+        archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
 
-        try:
+        tts = gTTS(text=texto, lang="es")
+        tts.save(archivo)
 
-            vc = await asegurar_conexion_voz(guild, canal_voz_id)
+        while vc.is_playing():
+            await asyncio.sleep(1)
 
-            if vc is None:
-                return
-
-            archivo = f"alerta_{guild.id}_{int(datetime.now().timestamp())}.mp3"
-
-            tts = gTTS(text=texto, lang="es")
-            tts.save(archivo)
-
-            while vc.is_playing():
-                await asyncio.sleep(1)
-
-            vc.play(
-                discord.FFmpegPCMAudio(
+        vc.play(
+            discord.FFmpegPCMAudio(
     executable="ffmpeg",
     source=archivo
 )
            )
 
-            while vc.is_playing():
-                await asyncio.sleep(1)
+        while vc.is_playing():
+            await asyncio.sleep(1)
 
-            os.remove(archivo)
+        os.remove(archivo)
 
-        except Exception as e:
-            print("Error aviso voz:", e)
+    except Exception as e:
+        print("Error aviso voz:", e)
 
 
 async def actualizar_panel_plantilla(guild):
