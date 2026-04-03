@@ -378,7 +378,8 @@ async def panelavisos(ctx):
 @tasks.loop(seconds=60)
 async def check_scheduled_announcements():
 
-    ahora=datetime.now(ARG_TZ).strftime("%H:%M")
+    ahora_hora = datetime.now(ARG_TZ).strftime("%H:%M")
+    hoy = datetime.now(ARG_TZ).strftime("%Y-%m-%d")
 
     for guild_id,config in servers_config.items():
 
@@ -387,14 +388,14 @@ async def check_scheduled_announcements():
             if not aviso["activo"]:
                 continue
 
-            if aviso["hora"]!=ahora:
+            if aviso["hora"] != ahora_hora:
                 continue
 
-            if aviso["ultimo_ejecutado"]==ahora:
+            # si ya se ejecutó HOY, no repetir
+            if aviso["ultimo_ejecutado"] == hoy:
                 continue
 
-            aviso["ultimo_ejecutado"]=ahora
-
+            aviso["ultimo_ejecutado"] = hoy
             save_data(servers_config)
 
             guild=bot.get_guild(int(guild_id))
